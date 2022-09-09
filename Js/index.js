@@ -1,4 +1,4 @@
-const IVA = 0.16
+const IVA = 21
 let monto, plazo, totalPagos, tasaAnual, fechaInicio, fechaPago, tasaMensual, mensualidad, intereses, impuestos,
     capital, insoluto, primerInteres, primerImpuesto, primerCapital, primerInsoluto, primerFechaPago, acumIntereses, acumImpuestos, acumCapital
 
@@ -100,11 +100,15 @@ function Impuestos () {
     return impuestos
 }
 
-function capital () {
+function Capital () {
     if ( primerCapital === 0 ) {
         capital = mensualidad - primerInteres - primerImpuesto
         primerCapital = capital
-    } else capital
+    } else {
+        capital = mensualidad - Intereses() - Impuestos()
+    }
+    return capital
+        
 }
 
 function SaldoInsoluto () {
@@ -112,7 +116,7 @@ function SaldoInsoluto () {
         insoluto = monto - primerCapital
         primerInsoluto = insoluto
     } else {
-        insoluto -= capital()
+        insoluto -= Capital()
     } 
     return insoluto
 }
@@ -140,12 +144,95 @@ function simularPrestamo () {
         fila.appendChild(celda)
     }
     cabeceraTabla.appendChild(fila)
-
+    
     //cuerpo de mi tabla
     for ( let i = 0; i < totalPagos; i++ ) {
         let intereses = Intereses(), impuestos = Impuestos(), capital = Capital(), insoluto = SaldoInsoluto()
         acumIntereses += intereses
         acumImpuestos += impuestos
         acumCapital += capital
+
+
+        var fila = document.createElement('tr')
+        for ( let j = 0; j < columnas.length; j++ ) {
+            let celda = document.createElement('td')
+            let texto
+
+            switch ( columnas[j] ) {
+                case 'No.':
+                    texto = (i + 1)
+                    break
+                case 'Fecha':
+                    if (primerFechaPago === true ) {
+                        fechaPago = new Date(fechaInicio)
+                        primerFechaPago = false
+                    } else {
+                        if ( periodo === 'semanal') {
+                            fechaPago.setDate(fechaPago.getDate() + 7)
+                        } else if ( periodo === 'quincenal' ) {
+                            fechaPago.setDate(fechaPago.getDate() + 15)
+                        } else if ( periodo === 'mensual' ) {
+                            fechaPago.setMonth(fechaPago.getMonth() + 1)
+                        }                       
+                    }
+                    texto = fechaPago.toLocaleDateString()
+                    break
+                case 'Mensualidad':
+                    texto = dinero.format(mensualidad)
+                    break
+                case 'Intereses':
+                    texto = dinero.format(intereses)
+                    break
+                case 'Impuestos':
+                    texto = dinero.format(impuestos)
+                    break
+                case 'Capital':
+                    texto = dinero.format(capital)
+                    break
+                case 'Insoluto':
+                    texto = dinero.format(Math.abs(insoluto))
+                    break
+                default:
+                    texto = null
+                    break
+            }
+            var textoCelda = document.createTextNode(texto)
+            celda.appendChild(textoCelda)
+            fila.appendChild(celda)
+        }
+        cuerpoTabla.appendChild(fila)
     }
+    //footer de la tabla
+    for ( let j = 0; j < columnas.length; j++ ) {
+        let celda = document.createElement('td')
+        let texto
+        switch (columnas[j] ) {
+            case 'No.':
+                texto = totalPagos
+                break
+            case 'Intereses':
+                texto = dinero.format(acumIntereses)
+                break
+            case 'Impuestos':
+                texto = dinero.format(acumImpuestos)
+                break
+            case 'Capital':
+                texto = dinero.format(acumCapital)
+                break
+            default:
+                texto = ''
+                break
+        }
+        let textoCelda = document.createTextNode(texto)
+        celda.appendChild(textoCelda)
+        pieTabla.appendChild(celda)
+    }
+
+    tabla.appendChild(cabeceraTabla)
+    tabla.appendChild(cuerpoTabla)
+    tabla.appendChild(pieTabla)
+    amortizaciones.appendChild(tabla)
+
 }
+
+
